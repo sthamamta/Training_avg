@@ -74,14 +74,27 @@ class MRIDataset(Dataset):
 
     def __getitem__(self, index):
         lr_index = self.indexes[index]
-        lr_image = self.lr_array[:,:,lr_index]
         hr_index =  lr_index * 2
-        first_hr = self.hr_array[:,:,hr_index-1]
-        second_hr = self.hr_array[:,:,hr_index]
-        third_hr = self.hr_array[:,:,hr_index+1]
-       
+        if self.axis == 0:
+            lr_image = self.lr_array[lr_index,:,:]
+            first_hr = self.hr_array[hr_index-1,:,:]
+            second_hr = self.hr_array[hr_index,:,:]
+            third_hr = self.hr_array[hr_index+1,:,:]
+        elif self.axis == 1:
+            lr_image = self.lr_array[:,lr_index,:]
+            first_hr = self.hr_array[:,hr_index-1,:]
+            second_hr = self.hr_array[:,hr_index,:]
+            third_hr = self.hr_array[:,hr_index+1,:]
+        else:
+            lr_image = self.lr_array[:,:,lr_index]
+            first_hr = self.hr_array[:,:,hr_index-1]
+            second_hr = self.hr_array[:,:,hr_index]
+            third_hr = self.hr_array[:,:,hr_index+1]
+
         # print("lr index", lr_index)
         # print("Hr index", hr_index)
+        # print("lr shape", lr_image.shape)
+        # print("Hr shape", first_hr.shape)
         # print("*********************************************************************************************************")
         lr_tensor= min_max_normalize(lr_image).float()
         first_hr_tensor = min_max_normalize(first_hr).float()

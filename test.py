@@ -44,11 +44,11 @@ def prepare_tensor(lr_Image):
     return lr_tensor
 
 parser = argparse.ArgumentParser(description='model demo')
-parser.add_argument('-checkpoint', type=str, metavar='',required=False,help='checkpoint path', default= 'outputs/checkpoints/srdense_avg_image_train_mse_ssim_laplacian_derivative_axisx/factor_2/epoch_2500_f_2.pth')
-parser.add_argument('-hr-array-path', type=str, metavar='',required=False,help='test hr array path',default= '../3D_Training/data_array/25/f1_25.nii')
-parser.add_argument('-lr-array-path', type=str, metavar='',required=False,help='test lr array path',default= '../3D_Training/data_array/50/f1_50.nii')
+parser.add_argument('-checkpoint', type=str, metavar='',required=False,help='checkpoint path', default= 'outputs/checkpoints/rrdbnet_avg_image_train_mse_ssim_derivative_loss/factor_2/epoch_1250_f_2.pth')
+parser.add_argument('-hr-array-path', type=str, metavar='',required=False,help='test hr array path',default= '../array_data/25/f1_25.nii')
+parser.add_argument('-lr-array-path', type=str, metavar='',required=False,help='test lr array path',default= '../array_data/50/f1_50.nii')
 parser.add_argument('-save-path', type=str, metavar='',required=False,help='plots save path',default= 'plots')
-parser.add_argument('-model-name', type=str, metavar='',required=False,help='model name',default= 'srdense')
+parser.add_argument('-model-name', type=str, metavar='',required=False,help='model name',default= 'rrdbnet')
 args = parser.parse_args()
 
 '''create output directory'''
@@ -79,17 +79,17 @@ ssim = ssim.to(device= device, memory_format=torch.channels_last, non_blocking=T
 mse = nn.MSELoss().to(device=device)
 nrmse = NRMSELoss().to(device=device)
 
-axis = 0
+axis = 2
 output_array = {}
-
+start_index = 50
 '''loop through lr array and apply model and append to otuput_array'''
-for i in range(1,150):
+for i in range(start_index,100):
 
     lr_image = lr_array[i,:,:]
     lr_tensor= prepare_tensor(lr_image)
     first_out,second_out,third_out =  model(lr_tensor)
 
-    if i==1:
+    if i==start_index:
         first_pred = first_out
     else:
         first_pred = (first_out + addition)/2
@@ -107,7 +107,7 @@ print("complete appply model")
 hr_array = load_data_nii(args.hr_array_path)
 
 
-for i in range (1,50):
+for i in range (55,95):
     hr_tensor = hr_array[2*i,:,:].unsqueeze(0).unsqueeze(0).float()
     lr_tensor = lr_array[i,:,:].unsqueeze(0).unsqueeze(0).float()
     pred_tensor = output_array[2*i].float()
@@ -157,7 +157,7 @@ for i in range (1,50):
 # quit();
 
 '''plot and measure metric'''
-for i in range(1,100):
+for i in range(55,95):
     lr_index = i//2
     pred = output_array[i]
     label = hr_array[i,:,:]

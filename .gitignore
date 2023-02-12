@@ -5,3 +5,4 @@ plots_mse
 plots_mse_ssim
 plots_mse_ssim_laplacian
 __pycache__
+description.txt
