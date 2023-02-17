@@ -8,6 +8,7 @@ from model.rrdbnet import RRDBNet,RRDBNetWOAVG
 from dataset.avg_dataset import MRIDataset
 from dataset.mri_dataset import MRIDatasetWOAVG
 from dataset.mri_dataset_full import MRIDatasetWOAVGFull
+from dataset.avg_dataset_full import MRIDatasetFull
 
 
 import torch.optim as optim
@@ -43,9 +44,24 @@ def load_train_dataset(opt):
 
 def load_val_dataset(opt):
     val_datasets = MRIDataset(hr_array_path = opt.eval_hr_array_path, lr_array_path=opt.eval_lr_array_path, factor = opt.factor,eval=True,axis=opt.axis)
-    eval_dataloader = torch.utils.data.DataLoader(val_datasets, batch_size = opt.val_batch_size, shuffle=True,
+    eval_dataloader = torch.utils.data.DataLoader(val_datasets, batch_size = opt.val_batch_size, shuffle=False,
         num_workers=8,pin_memory=False,drop_last=False)
     return eval_dataloader,val_datasets
+
+
+
+def load_dataset_full(opt,load_eval=False):
+    train_datasets = MRIDatasetFull(hr_path_main = opt.train_hr_path_main, lr_path_main=opt.train_lr_path_main,hr_files_list=opt.train_hr_files_list, lr_files_list=opt.train_lr_files_list,factor = opt.factor,eval=False,axis=opt.axis)
+    train_dataloader = torch.utils.data.DataLoader(train_datasets, batch_size = opt.train_batch_size,shuffle=True,
+        num_workers=8,pin_memory=False,drop_last=False)
+
+    if load_eval:
+        val_datasets = MRIDatasetFull(hr_path_main = opt.eval_hr_path_main, lr_path_main=opt.eval_lr_path_main,hr_files_list=opt.eval_hr_files_list, lr_files_list=opt.eval_lr_files_list, factor = opt.factor,eval=True,axis=opt.axis)
+        eval_dataloader = torch.utils.data.DataLoader(val_datasets, batch_size = opt.val_batch_size, shuffle=False,
+        num_workers=8,pin_memory=False,drop_last=False)
+        return train_dataloader,eval_dataloader,train_datasets,val_datasets
+    else: 
+        return train_dataloader,train_datasets
 
 
 

@@ -1,11 +1,11 @@
 # functions for loading the checkpoints
 
 import torch
-from model.densenet import SRDenseNet
-from model.rrdbnet import RRDBNet
+from model.densenet import SRDenseNet, SRDenseNetWOAVG
+from model.rrdbnet import RRDBNet, RRDBNetWOAVG
 
 def load_checkpoint(checkpoint_path,device, model_name):
-    if model_name in ['srdense','densenet']:
+    if model_name in ['srdense','densenet', 'srdensenet']:
         model = load_dense_net(checkpoint_path=checkpoint_path,device=device)
     elif model_name in ['rrdbnet', 'RRDBNet','RRDBNET']:
         model =load_rrdbnet(checkpoint_path,device)
@@ -22,7 +22,7 @@ def load_dense_net(checkpoint_path,device):
     num_layers =checkpoint['num_layers']
     upscale_factor = checkpoint["upscale_factor"]
     mode = checkpoint["mode"]
-    model = SRDenseNet(num_channels=num_channels, growth_rate=growth_rate, num_blocks=num_blocks, num_layers=num_layers, upscale_factor=upscale_factor, mode = mode)
+    model = SRDenseNetWOAVG(num_channels=num_channels, growth_rate=growth_rate, num_blocks=num_blocks, num_layers=num_layers, upscale_factor=upscale_factor, mode = mode)
     state_dict = model.state_dict()
     for n, p in checkpoint['model_state_dict'].items():
         new_key = n[7:]
@@ -44,7 +44,7 @@ def load_rrdbnet(checkpoint_path,device):
     num_blocks = checkpoint["num_blocks"]
     mode = checkpoint["mode"]
     upscale_factor = checkpoint["upscale_factor"]
-    model = RRDBNet(in_channels=in_channels, out_channels=out_channels, channels=channels, growth_channels=growth_channels,num_blocks=num_blocks, upscale_factor=upscale_factor, mode = mode)
+    model = RRDBNetWOAVG(in_channels=in_channels, out_channels=out_channels, channels=channels, growth_channels=growth_channels,num_blocks=num_blocks, upscale_factor=upscale_factor, mode = mode)
     state_dict = model.state_dict()
     for n, p in checkpoint['model_state_dict'].items():
         new_key = n[7:]

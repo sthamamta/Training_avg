@@ -15,7 +15,7 @@ from utils.general import save_configuration_yaml,LogOutputs
 from utils.config import set_outputs_dir,set_training_metric_dir
 import os
 import wandb
-os.environ["CUDA_VISIBLE_DEVICES"]='0,1'
+os.environ["CUDA_VISIBLE_DEVICES"]='6,7'
 
 
 def train(opt,model,criterions,optimizer,train_datasets,train_dataloader,eval_dataloader=None,wandb=None):
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     '''get the configuration file'''
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', help="configuration file *.yml", type=str, required=False, 
-    default='configuration/srdense_axis_z/srdensenet_full2.yaml')
+    default='configuration/srdense_axis_x/srdensenet_full1.yaml')
     sys.argv = ['-f']
     opt   = parser.parse_known_args()[0]
 

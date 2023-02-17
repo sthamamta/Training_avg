@@ -3,7 +3,7 @@
 import yaml
 import argparse
 import sys
-from utils.train_utils import load_dataset,load_model,get_criterion,get_optimizer
+from utils.train_utils import load_dataset,load_model,get_criterion,get_optimizer, load_dataset_full
 import torch
 import torch.nn as nn
 from utils.image_quality_assessment import PSNR,SSIM
@@ -116,7 +116,11 @@ if __name__ == "__main__":
     opt.device = device
 
     '''load dataset (loading dataset based on dataset name and factor on arguments)'''
-    train_dataloader,train_datasets = load_dataset(opt=opt,load_eval=False)
+    if opt.train_full:
+        print("LOading full dataset")
+        train_dataloader,train_datasets = load_dataset_full(opt=opt,load_eval=False)
+    else:
+        train_dataloader,train_datasets = load_dataset(opt=opt,load_eval=False)
 
     '''load model'''
     model = load_model(opt)
