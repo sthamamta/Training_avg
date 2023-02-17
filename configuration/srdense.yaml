@@ -1,7 +1,8 @@
 #configuration file
 
 model_name: 'srdense'
-exp_name: 'srdense_avg_image_train_mse_ssim_derivative_loss'
+exp_name: 'srdense_train_mse_ssim_axis2'
+# exp_name: 'srdense_avg_image_train_mse_ssim_derivative_loss'
 project_name: 'super_resolution'
 wandb: True 
  
@@ -16,9 +17,9 @@ axis: 2
 
 factor: 2
 # criterions: ['mse','laplace pyramid'] 
-criterions: ['mse','ssim', 'derivative loss'] 
+criterions: ['mse','ssim'] 
 
-num_epochs: 5505
+num_epochs: 1505
 lr: 0.0001
 lr_decay_factor: 0.98
 original_lr: 0.001

@@ -202,3 +202,133 @@ class RRDBNet(nn.Module):
                     }, path) 
 
 
+class RRDBNetWOAVG(nn.Module):
+    def __init__(
+            self,
+            in_channels: int = 1,
+            out_channels: int = 1,
+            channels: int = 16,
+            growth_channels: int = 8,
+            num_blocks: int = 12,
+            upscale_factor: int = 2,
+            mode = 'nearest',
+    ) -> None:
+        super(RRDBNetWOAVG, self).__init__()
+        self.upscale_factor = upscale_factor
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.channels = channels
+        self.growth_channels = growth_channels
+        self.num_blocks = num_blocks
+        self.upscale_factor = upscale_factor
+        self.mode= mode
+
+
+        # The first layer of convolutional layer.
+        self.conv1 = nn.Conv2d(in_channels, channels, (3, 3), (1, 1), (1, 1))
+
+        # Feature extraction backbone network.
+        trunk = []
+        for _ in range(num_blocks):
+            trunk.append(_ResidualResidualDenseBlock(channels, growth_channels))
+        self.trunk = nn.Sequential(*trunk)
+
+        # After the feature extraction network, reconnect a layer of convolutional blocks.
+        self.conv2 = nn.Conv2d(channels, channels, (3, 3), (1, 1), (1, 1))
+
+        
+
+        # Upsampling convolutional layer.
+        if upscale_factor == 2:
+            self.upsampling1 = nn.Sequential(
+                nn.Conv2d(channels, channels, (3, 3), (1, 1), (1, 1)),
+                nn.LeakyReLU(0.2, True)
+            )
+        if upscale_factor == 4:
+            self.upsampling1 = nn.Sequential(
+                nn.Conv2d(channels, channels, (3, 3), (1, 1), (1, 1)),
+                nn.LeakyReLU(0.2, True)
+            )
+            self.upsampling2 = nn.Sequential(
+                nn.Conv2d(channels, channels, (3, 3), (1, 1), (1, 1)),
+                nn.LeakyReLU(0.2, True)
+            )
+        if upscale_factor == 8:
+            self.upsampling1 = nn.Sequential(
+                nn.Conv2d(channels, channels, (3, 3), (1, 1), (1, 1)),
+                nn.LeakyReLU(0.2, True)
+            )
+            self.upsampling2 = nn.Sequential(
+                nn.Conv2d(channels, channels, (3, 3), (1, 1), (1, 1)),
+                nn.LeakyReLU(0.2, True)
+            )
+            self.upsampling3 = nn.Sequential(
+                nn.Conv2d(channels, channels, (3, 3), (1, 1), (1, 1)),
+                nn.LeakyReLU(0.2, True)
+            )
+
+        # Reconnect a layer of convolution block after upsampling.
+        self.conv3 = nn.Sequential(
+            nn.Conv2d(channels, channels, (3, 3), (1, 1), (1, 1)),
+            nn.LeakyReLU(0.2, True)
+        )
+
+        # Output layer.
+        self.conv= nn.Conv2d(channels, out_channels, (3, 3), (1, 1), (1, 1))
+
+    
+        # Initialize all layer
+        self._initialize_weights()
+
+    # The model should be defined in the Torch.script method.
+    def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
+        out1 = self.conv1(x)
+        out = self.trunk(out1)
+        out2 = self.conv2(out)
+        out = torch.add(out1, out2)
+
+        if self.upscale_factor == 2:
+            out = self.upsampling1(F.interpolate(out, scale_factor=2, mode=self.mode))
+        if self.upscale_factor == 4:
+            out = self.upsampling1(F.interpolate(out, scale_factor=2, mode=self.mode))
+            out = self.upsampling2(F.interpolate(out, scale_factor=2, mode=self.mode))
+        if self.upscale_factor == 8:
+            out = self.upsampling1(F.interpolate(out, scale_factor=2, mode=self.mode))
+            out = self.upsampling2(F.interpolate(out, scale_factor=2, mode=self.mode))
+            out = self.upsampling3(F.interpolate(out, scale_factor=2, mode=self.mode))
+
+        out = self.conv3(out)
+
+        out = self.conv(out)
+       
+        out = torch.clamp_(out, 0.0, 1.0)
+        
+        return out
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self._forward_impl(x)
+
+    def _initialize_weights(self) -> None:
+        for module in self.modules():
+            if isinstance(module, nn.Conv2d):
+                nn.init.kaiming_normal_(module.weight)
+                module.weight.data *= 0.1
+                if module.bias is not None:
+                    nn.init.constant_(module.bias, 0)
+
+
+    def save(self,model_weights,path,optimizer_weights,epoch):
+         torch.save({
+                    'in_channels':self.in_channels,
+                    'out_channels':self.out_channels,
+                    'channels':self.channels,
+                    'growth_channels': self.growth_channels,
+                    'num_blocks': self.num_blocks,
+                    'mode': self.mode,
+                    'upscale_factor': self.upscale_factor,
+                    'epoch': epoch,
+                    'model_state_dict': model_weights,
+                    'optimizer_state_dict': optimizer_weights,
+                    }, path) 
+
+

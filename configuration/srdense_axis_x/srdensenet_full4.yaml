@@ -1,0 +1,46 @@
+
+model_name: 'srdense'
+exp_name: 'srdense_train_full_axis0_mse_ssim_derivative_loss'
+project_name: 'super_resolution'
+wandb: True 
+ 
+
+lr: 0.0001
+train_batch_size: 16
+val_batch_size: 1
+
+train_hr_path_main: '../3D_Training/data_array/25'
+train_lr_path_main: '../3D_Training/data_array/50'
+
+train_hr_files_list: ['f1_25.nii','f2_25.nii','f5_25.nii']
+train_lr_files_list: ['f1_50.nii','f2_50.nii','f5_50.nii']
+
+train_full: True
+axis: 0
+
+factor: 2
+# criterions: ['mse','laplace pyramid'] 
+criterions: ['mse','ssim','derivative loss'] 
+
+num_epochs: 1505
+lr: 0.0001
+lr_decay_factor: 0.98
+original_lr: 0.001
+
+n_freq: 50 # model checkpoint saving frequency
+
+train_batch_size: 16
+val_batch_size: 1
+seed: 34
+
+init: 'norm' 
+optimizer: adam
+momentum: 0.9
+weight_decay: 0.1
+
+growth_rate: 3
+num_blocks: 4
+num_layers: 3
+
+
+

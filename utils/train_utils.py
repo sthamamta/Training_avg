@@ -3,9 +3,11 @@
 import torch
 # from utils.preprocess import 
 import torch.nn as nn
-from model.densenet import SRDenseNet
-from model.rrdbnet import RRDBNet
+from model.densenet import SRDenseNet, SRDenseNetWOAVG
+from model.rrdbnet import RRDBNet,RRDBNetWOAVG
 from dataset.avg_dataset import MRIDataset
+from dataset.mri_dataset import MRIDatasetWOAVG
+from dataset.mri_dataset_full import MRIDatasetWOAVGFull
 
 
 import torch.optim as optim
@@ -85,7 +87,7 @@ def get_criterion(name):
     elif name in ['pyramid loss','laplacian loss']:
         print("Using Pyramid loss")
         criterion  = LaplacianPyramidLoss()
-    elif name in ['derivative loss']:
+    elif name in ['derivative loss','derivative']:
         print("Using Derivative loss")
         criterion  = DerivativeLoss()
     else:
@@ -110,5 +112,51 @@ def get_optimizer(opt,model):
         return None
 
 
-
+'''load the model instance based on opt.model_name value'''
+def load_model_wo_avg(opt):
+    if opt.model_name in ['srdense','dense']:
+        model =  SRDenseNetWOAVG(num_channels=1, growth_rate = opt.growth_rate, num_blocks = opt.num_blocks, num_layers=opt.num_layers, upscale_factor=opt.factor).to(opt.device)
+    if opt.model_name in ['rrdbnet','RRDBNet','RRDBNET']:
+        model =  RRDBNetWOAVG(in_channels=1, out_channels = opt.out_channels,channels=opt.channels, growth_channels = opt.growth_channels,num_blocks = opt.num_blocks, upscale_factor = opt.factor, mode=opt.mode).to(opt.device)
+    else:
+        print(f'Model {opt.model_name} not implemented')
+    return model
  
+''' set the dataset path based on opt.dataset,opt.factor values and load & return the same dataset/dataloader'''
+def load_dataset_wo_avg(opt, load_eval=True):
+    train_dataloader,train_datasets =load_train_dataset_wo_avg(opt)
+    if load_eval:
+        eval_dataloader,val_datasets = load_val_dataset_wo_avg(opt)
+        return train_dataloader,eval_dataloader,train_datasets,val_datasets
+    else: 
+        return train_dataloader,train_datasets
+
+def load_train_dataset_wo_avg(opt):
+    train_datasets = MRIDatasetWOAVG(hr_array_path = opt.train_hr_array_path, lr_array_path=opt.train_lr_array_path, factor = opt.factor,eval=False,axis=opt.axis)
+    train_dataloader = torch.utils.data.DataLoader(train_datasets, batch_size = opt.train_batch_size,shuffle=True,
+        num_workers=8,pin_memory=False,drop_last=False)
+    return train_dataloader,train_datasets
+
+
+def load_val_dataset_wo_avg(opt):
+    val_datasets = MRIDatasetWOAVG(hr_array_path = opt.eval_hr_array_path, lr_array_path=opt.eval_lr_array_path, factor = opt.factor,eval=True,axis=opt.axis)
+    eval_dataloader = torch.utils.data.DataLoader(val_datasets, batch_size = opt.val_batch_size, shuffle=False,
+        num_workers=8,pin_memory=False,drop_last=False)
+    return eval_dataloader,val_datasets
+
+''' set the dataset path based on opt.dataset,opt.factor values and load & return the same dataset/dataloader'''
+def load_dataset_wo_avg_full(opt, load_eval=True):
+
+    train_datasets = MRIDatasetWOAVGFull(hr_path_main = opt.train_hr_path_main, lr_path_main=opt.train_lr_path_main,hr_files_list=opt.train_hr_files_list, lr_files_list=opt.train_lr_files_list,factor = opt.factor,eval=False,axis=opt.axis)
+    train_dataloader = torch.utils.data.DataLoader(train_datasets, batch_size = opt.train_batch_size,shuffle=True,
+        num_workers=8,pin_memory=False,drop_last=False)
+
+    if load_eval:
+        val_datasets = MRIDatasetWOAVGFull(hr_path_main = opt.eval_hr_path_main, lr_path_main=opt.eval_lr_path_main,hr_files_list=opt.eval_hr_files_list, lr_files_list=opt.eval_lr_files_list, factor = opt.factor,eval=True,axis=opt.axis)
+        eval_dataloader = torch.utils.data.DataLoader(val_datasets, batch_size = opt.val_batch_size, shuffle=False,
+        num_workers=8,pin_memory=False,drop_last=False)
+        return train_dataloader,eval_dataloader,train_datasets,val_datasets
+    else: 
+        return train_dataloader,train_datasets
+
+

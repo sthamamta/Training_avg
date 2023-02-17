@@ -3,14 +3,14 @@
 import yaml
 import argparse
 import sys
-from utils.train_utils import load_dataset,load_model,get_criterion,get_optimizer
+from utils.train_utils import load_dataset_wo_avg,load_model_wo_avg,get_criterion,get_optimizer, load_dataset_wo_avg_full
 import torch
 import torch.nn as nn
 from utils.image_quality_assessment import PSNR,SSIM
 import copy
 from utils.logging_metric import LogMetric,create_loss_meters_srdense
 from utils.train_utils import adjust_learning_rate
-from utils.train_epoch import train_epoch_srdense
+from utils.train_epoch import train_epoch_srdense_wo_avg
 from utils.general import save_configuration_yaml,LogOutputs
 from utils.config import set_outputs_dir,set_training_metric_dir
 import os
@@ -37,7 +37,7 @@ def train(opt,model,criterions,optimizer,train_datasets,train_dataloader,eval_da
         '''train one epoch and evaluate the model'''
     
         epoch_losses = create_loss_meters_srdense()  #create a dictionary
-        images,labels,preds = train_epoch_srdense(opt,model,criterions,optimizer,train_datasets,train_dataloader,epoch,epoch_losses)
+        images,labels,preds = train_epoch_srdense_wo_avg(opt,model,criterions,optimizer,train_datasets,train_dataloader,epoch,epoch_losses)
         # eval_loss, eval_l1,eval_psnr, eval_ssim,eval_hfen = validate_srdense(opt,model, eval_dataloader,criterion,addition=opt.addition)
         
         # apply_model_using_cv(model,epoch,opt,addition= opt.addition)
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     '''get the configuration file'''
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', help="configuration file *.yml", type=str, required=False, 
-    default='configuration/rrdbnet.yaml')
+    default='configuration/srdense_axis_z/srdensenet_full2.yaml')
     sys.argv = ['-f']
     opt   = parser.parse_known_args()[0]
 
@@ -116,10 +116,14 @@ if __name__ == "__main__":
     opt.device = device
 
     '''load dataset (loading dataset based on dataset name and factor on arguments)'''
-    train_dataloader,train_datasets = load_dataset(opt=opt,load_eval=False)
+    if opt.train_full:
+        print("LOading full dataset")
+        train_dataloader,train_datasets = load_dataset_wo_avg_full(opt=opt,load_eval=False)
+    else:
+        train_dataloader,train_datasets = load_dataset_wo_avg(opt=opt,load_eval=False) 
 
     '''load model'''
-    model = load_model(opt)
+    model = load_model_wo_avg(opt)
 
     '''print model'''
     print(model)
